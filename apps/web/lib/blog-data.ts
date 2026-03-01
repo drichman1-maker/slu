@@ -9,6 +9,14 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'game-used-relic-cards',
+    title: 'Game-Used Relic Cards: Do They Hold Value When Graded?',
+    excerpt: 'The definitive analysis of graded relic cards: when grading adds 50-120% premiums, which relic types command respect, and why "player-worn" is the kiss of death for value retention.',
+    date: '2026-03-02',
+    readTime: '15 min read',
+    category: 'Memorabilia'
+  },
+  {
     slug: '2026-market-report',
     title: '2026 Graded Card Market Report: Trends, Pop Reports, and Predictions',
     excerpt: 'Comprehensive analysis of the $15.2 billion graded card market. Junk wax gems lead the recovery, PSA processes 7.3 million cards, and we predict 20-38% growth for 2027.',
