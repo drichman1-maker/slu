@@ -9,6 +9,14 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'graded-cards-500-percent-gains',
+    title: 'Graded Baseball Cards That Gained 500%+ in Value (And Why)',
+    excerpt: 'The biggest winners of the sports card boom—and the exact factors that turned $100 cards into $5,000+ assets. Learn the patterns to spot the next breakout stars.',
+    date: '2026-03-02',
+    readTime: '15 min read',
+    category: 'Investment Analysis'
+  },
+  {
     slug: 'submitting-cards-for-grading',
     title: 'How to Submit Cards for Grading: Step-by-Step Guide for First-Timers',
     excerpt: 'Master the submission process with our comprehensive walkthrough. From prep to profit, learn exactly how to get your baseball cards professionally graded.',
