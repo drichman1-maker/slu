@@ -9,6 +9,14 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: '2026-market-report',
+    title: '2026 Graded Card Market Report: Trends, Pop Reports, and Predictions',
+    excerpt: 'Comprehensive analysis of the $15.2 billion graded card market. Junk wax gems lead the recovery, PSA processes 7.3 million cards, and we predict 20-38% growth for 2027.',
+    date: '2026-03-02',
+    readTime: '20 min read',
+    category: 'Market Analysis'
+  },
+  {
     slug: 'pre-war-grading-guide',
     title: 'Pre-War Baseball Cards: Grading Challenges and Opportunities',
     excerpt: 'The ultimate guide to collecting T206, Goudey, and caramel cards. Navigate authentication pitfalls and uncover undervalued gems from baseball\'s golden age.',
