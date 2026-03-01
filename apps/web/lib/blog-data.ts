@@ -9,6 +9,30 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'pre-war-grading-guide',
+    title: 'Pre-War Baseball Cards: Grading Challenges and Opportunities',
+    excerpt: 'The ultimate guide to collecting T206, Goudey, and caramel cards. Navigate authentication pitfalls and uncover undervalued gems from baseball\'s golden age.',
+    date: '2026-03-02',
+    readTime: '16 min read',
+    category: 'Vintage Guide'
+  },
+  {
+    slug: 'junk-wax-hidden-gems',
+    title: 'Most Underrated Graded Cards from the Junk Wax Era',
+    excerpt: 'Think everything from 1986-1993 is worthless? These hidden gems have gained 300-600% since 2020, proving condition scarcity trumps production volume.',
+    date: '2026-03-02',
+    readTime: '14 min read',
+    category: 'Vintage Guide'
+  },
+  {
+    slug: '1952-mantle-millions',
+    title: 'Why the 1952 Topps Mickey Mantle Commands Millions',
+    excerpt: 'The anatomy of a $12.6 million baseball card. From a 25-cent pack pull to the most valuable sports card in history—exploring the perfect storm of scarcity.',
+    date: '2026-03-02',
+    readTime: '18 min read',
+    category: 'Vintage Guide'
+  },
+  {
     slug: 'graded-cards-500-percent-gains',
     title: 'Graded Baseball Cards That Gained 500%+ in Value (And Why)',
     excerpt: 'The biggest winners of the sports card boom—and the exact factors that turned $100 cards into $5,000+ assets. Learn the patterns to spot the next breakout stars.',
