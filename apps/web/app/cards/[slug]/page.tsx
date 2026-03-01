@@ -1,118 +1,202 @@
-import Image from "next/image"
-import { notFound } from "next/navigation"
-import { prisma } from "@slugger/db/client"
-import { PlayerHero } from "@slugger/ui/components/player-hero"
-import { GraderBadge } from "@slugger/ui/components/grader-badge"
-import { MarketStats } from "@slugger/ui/components/market-stats"
-import { SoldListings } from "@slugger/ui/components/sold-listings"
+import { notFound } from 'next/navigation'
+import Link from 'next/link'
+import { getCard, getCards } from '../../../lib/data'
+import { MarketStats } from '../../../components/MarketStats'
+import { GradedBadge } from '../../../components/GradedBadge'
+import { PriceChart } from '../../../components/PriceChart'
+import { PopulationReport } from '../../../components/PopulationReport'
+import { PageHeader } from '../../../components/PageHeader'
+import { CardDetailClient } from './CardDetailClient'
 
 interface CardPageProps {
-  params: {
-    slug: string
-  }
+  params: Promise<{ slug: string }>
+}
+
+export async function generateStaticParams() {
+  const cards = getCards()
+  return cards.map((card) => ({
+    slug: card.slug,
+  }))
 }
 
 export default async function CardPage({ params }: CardPageProps) {
-  const card = await prisma.card.findUnique({
-    where: { slug: params.slug },
-    include: {
-      player: true,
-      set: true,
-      gradedCards: {
-        include: {
-          sales: {
-            orderBy: { date: "desc" },
-          },
-        },
-      },
-    },
-  })
-
+  const { slug } = await params
+  const card = getCard(slug)
+  
   if (!card) {
     notFound()
   }
 
-  // Aggregate sales from all graded variants
-  const allSales = card.gradedCards
-    .flatMap((gc) => gc.sales)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 10)
+  // Get related cards (same player, other cards)
+  const allCards = getCards()
+  const relatedCards = allCards.filter(c => c.player.slug === card.player.slug && c.id !== card.id)
+
+  // Generate price history from recent sales
+  const priceHistory = card.recentSales?.map(s => s.price).reverse() || []
 
   return (
-    <main className="min-h-screen bg-background">
-      <PlayerHero player={card.player} />
-      
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left column - Card image and info */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <h1 className="text-3xl font-bold">
-                  {card.set.year} {card.set.brand} #{card.number}
-                </h1>
-                <p className="text-muted-foreground mt-1">
-                  {card.description || `${card.player.name} rookie card`}
-                </p>
-              </div>
-            </div>
+    <div className="space-y-8">
+      {/* Page Header */}
+      <PageHeader 
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Cards', href: '/cards' },
+          { label: card.player.name }
+        ]}
+      />
 
-            <div className="aspect-[2/3] relative bg-muted rounded-lg overflow-hidden max-w-md">
-              {card.imageUrl ? (
-                <Image
-                  src={card.imageUrl}
-                  alt={`${card.player.name} ${card.set.year} ${card.set.name}`}
-                  fill
-                  className="object-cover"
-                />
-              ) : (
-                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                  <span className="text-6xl">⚾</span>
-                </div>
-              )}
-            </div>
-
-            <MarketStats
-              fairValueScore={card.fairValueScore || undefined}
-              liquidityIndex={card.liquidityIndex || undefined}
-              momentumScore={card.momentumScore || undefined}
-              volatilityScore={card.volatilityScore || undefined}
+      {/* Card Header */}
+      <div className="grid md:grid-cols-2 gap-8">
+        {/* Card Image */}
+        <div className="glass-card aspect-[2/3] rounded-2xl overflow-hidden">
+          {card.imageUrl ? (
+            <img 
+              src={card.imageUrl} 
+              alt={`${card.player.name} ${card.set.year} ${card.set.brand}`}
+              className="w-full h-full object-cover"
             />
-          </div>
-
-          {/* Right column - Graded variants and sales */}
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Graded Variants</h2>
-              <div className="space-y-3">
-                {card.gradedCards.map((gradedCard) => (
-                  <div
-                    key={gradedCard.id}
-                    className="p-4 border rounded-lg"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <GraderBadge
-                        grader={gradedCard.grader}
-                        grade={gradedCard.grade}
-                      />
-                      {gradedCard.population && (
-                        <span className="text-sm text-muted-foreground">
-                          Pop: {gradedCard.population.toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {gradedCard.sales.length} recent sales
-                    </p>
-                  </div>
-                ))}
-              </div>
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <span className="text-8xl">⚾</span>
             </div>
+          )}
+        </div>
 
-            <SoldListings sales={allSales} />
+        {/* Card Info */}
+        <div className="space-y-6">
+          <div>
+            <Link 
+              href={`/players/${card.player.slug}`}
+              className="text-[var(--accent)] hover:underline text-lg font-medium"
+            >
+              {card.player.name}
+            </Link>
+            <h1 className="text-3xl md:text-4xl font-bold mt-2 text-white">
+              {card.set.year} {card.set.brand}
+            </h1>
+            <p className="text-xl text-muted-foreground mt-1">
+              #{card.number}
+            </p>
+            <div className="flex items-center gap-2 mt-3">
+              <span className="px-3 py-1 bg-muted rounded-full text-sm text-muted-foreground">
+                {card.player.position}
+              </span>
+              <span className="px-3 py-1 bg-muted rounded-full text-sm text-muted-foreground">
+                {card.player.team}
+              </span>
+            </div>
           </div>
+
+          {/* Market Stats */}
+          <MarketStats 
+            fairValueScore={card.fairValueScore}
+            liquidityIndex={card.liquidityIndex}
+            momentumScore={card.momentumScore}
+            volatilityScore={card.volatilityScore}
+          />
+
+          {/* Action Buttons */}
+          <CardDetailClient cardName={`${card.player.name} ${card.set.year}`} />
         </div>
       </div>
-    </main>
+
+      {/* Price Chart & Population Report */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {priceHistory.length > 0 && (
+          <div className="glass-card p-6">
+            <h2 className="text-lg font-semibold text-white mb-4">Price History</h2>
+            <PriceChart data={priceHistory} />
+          </div>
+        )}
+        <div className="glass-card p-6">
+          <PopulationReport gradedCards={card.gradedCards} />
+        </div>
+      </div>
+
+      {/* Graded Versions */}
+      <div className="glass-card p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">Graded Versions</h2>
+        <div className="flex flex-wrap gap-2">
+          {card.gradedCards.map((gc) => (
+            <GradedBadge key={gc.id} grader={gc.grader} grade={gc.grade} />
+          ))}
+        </div>
+      </div>
+
+      {/* Recent Sales Table */}
+      <div className="glass-card overflow-hidden">
+        <div className="p-4 border-b border-border/50">
+          <h2 className="text-lg font-semibold text-white">Recent Sales</h2>
+        </div>
+        {card.recentSales && card.recentSales.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border/50 text-sm text-muted-foreground">
+                  <th className="text-left p-4 font-medium">Date</th>
+                  <th className="text-left p-4 font-medium">Grade</th>
+                  <th className="text-left p-4 font-medium">Price</th>
+                  <th className="text-left p-4 font-medium">Platform</th>
+                </tr>
+              </thead>
+              <tbody>
+                {card.recentSales.map((sale, index) => (
+                  <tr key={sale.id} className="border-b border-border/50 last:border-0 hover:bg-white/5 transition-colors">
+                    <td className="p-4">{sale.date}</td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-bold text-white ${
+                        sale.grader === 'PSA' ? 'bg-red-600' :
+                        sale.grader === 'BGS' ? 'bg-blue-600' :
+                        'bg-green-600'
+                      }`}>
+                        {sale.grader} {sale.grade}
+                      </span>
+                    </td>
+                    <td className="p-4 font-semibold text-white">${sale.price.toLocaleString()}</td>
+                    <td className="p-4 text-muted-foreground">{sale.platform}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-6">
+            <p className="text-muted-foreground">No recent sales data available.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Related Cards */}
+      {relatedCards.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-2xl font-bold text-white">More {card.player.name} Cards</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {relatedCards.map(relatedCard => (
+              <Link
+                key={relatedCard.id}
+                href={`/cards/${relatedCard.slug}`}
+                className="glass-card p-4 hover:border-[var(--accent)]/30 transition-all"
+              >
+                <div className="aspect-[2/3] relative mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-amber-500/10 to-orange-500/10">
+                  {relatedCard.imageUrl ? (
+                    <img 
+                      src={relatedCard.imageUrl} 
+                      alt={relatedCard.player.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-4xl">⚾</span>
+                    </div>
+                  )}
+                </div>
+                <h3 className="font-bold text-white">{relatedCard.set.year} {relatedCard.set.brand}</h3>
+                <p className="text-sm text-muted-foreground">#{relatedCard.number}</p>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
   )
 }

@@ -1,120 +1,152 @@
-import { prisma } from "@slugger/db/client"
-import { CardGrid } from "@slugger/ui/components/card-grid"
+import { CardGrid } from '../components/CardGrid'
+import { PortfolioCard } from '../components/PortfolioCard'
+import { IntelligenceGrid } from '../components/IntelligenceGrid'
+import { AnimatedCounter } from '../components/AnimatedCounter'
+import { getCards, getPlayers } from '../lib/data'
+import Link from 'next/link'
 
-export default async function HomePage() {
-  // Get featured cards (top 6 by fair value score)
-  const featuredCards = await prisma.card.findMany({
-    include: {
-      player: true,
-      set: true,
-      gradedCards: true,
-    },
-    orderBy: {
-      fairValueScore: "desc",
-    },
-    take: 6,
-  })
+export default function Home() {
+  const cards = getCards()
+  const players = getPlayers()
+  
+  // Calculate stats
+  const totalCards = cards.length
+  const totalPlayers = players.length
+  const trendingCards = cards.filter(c => (c.momentumScore || 0) > 0)
+  const trendingUp = trendingCards.length
+  const psaCards = cards.filter(c => c.gradedCards.some(gc => gc.grader === 'PSA')).length
 
-  // Get recent sales count
-  const recentSalesCount = await prisma.sale.count({
-    where: {
-      date: {
-        gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
-      },
-    },
-  })
-
-  // Get total cards and players
-  const totalCards = await prisma.card.count()
-  const totalPlayers = await prisma.player.count()
+  // Calculate mock portfolio (sum of fair value scores * 100)
+  const portfolioValue = cards.reduce((sum, card) => sum + ((card.fairValueScore || 0) * 100), 0)
+  const dailyChange = portfolioValue * 0.02 // Mock 2% daily change
+  const topGainer = trendingCards[0]?.player.name || '—'
+  const topGainerChange = trendingCards[0]?.momentumScore || 0
 
   return (
-    <main className="min-h-screen bg-background">
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-900 to-blue-700 text-white">
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Slugger
-            </h1>
-            <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              Track prices and values of graded baseball cards.
-              PSA, BGS, SGC pricing data for collectors and investors.
-            </p>
-            <div className="flex justify-center gap-4 pt-4">
-              <a 
-                href="/cards"
-                className="inline-flex items-center justify-center rounded-md bg-white px-6 py-3 text-sm font-medium text-blue-900 hover:bg-white/90"
-              >
-                Browse Cards
-              </a>
-              <a 
-                href="/players"
-                className="inline-flex items-center justify-center rounded-md bg-blue-800 px-6 py-3 text-sm font-medium text-white hover:bg-blue-800/90"
-              >
-                View Players
-              </a>
+    <div className="space-y-12">
+      {/* Hero + Portfolio Section */}
+      <section className="relative py-12 md:py-16 overflow-hidden">
+        <div className="absolute inset-0 hero-gradient" />
+        <div className="absolute inset-0 bg-gradient-to-b from-cyan-500/5 to-transparent" />
+        
+        <div className="relative max-w-7xl mx-auto px-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-end">
+            {/* Left: Hero Text */}
+            <div className="lg:col-span-2">
+              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4">
+                Track <span className="gradient-text">Graded</span> Cards
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-xl mb-6">
+                Track PSA, BGS, and SGC graded baseball cards. Market momentum, fair value scores, and recent sales data for collectors and investors.
+              </p>
+              <div className="flex gap-3">
+                <Link 
+                  href="/cards" 
+                  className="btn-primary"
+                >
+                  Browse Cards →
+                </Link>
+                <Link 
+                  href="/players" 
+                  className="btn-secondary"
+                >
+                  View Players
+                </Link>
+              </div>
             </div>
-          </div>
 
-          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            <div>
-              <p className="text-3xl font-bold">{totalCards}</p>
-              <p className="text-sm text-blue-200">Cards Tracked</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold">{totalPlayers}</p>
-              <p className="text-sm text-blue-200">Players</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold">{recentSalesCount}</p>
-              <p className="text-sm text-blue-200">Sales (30d)</p>
-            </div>
-            <div>
-              <p className="text-3xl font-bold">3</p>
-              <p className="text-sm text-blue-200">Graders</p>
+            {/* Right: Portfolio Card */}
+            <div className="lg:col-span-1">
+              <PortfolioCard
+                totalValue={portfolioValue}
+                dailyChange={dailyChange}
+                dailyChangePercent={2.1}
+                cardsTracked={totalCards}
+                topGainer={topGainer}
+                topGainerChange={topGainerChange}
+              />
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Featured Cards Section */}
-      <div className="container mx-auto px-4 py-12">
+      {/* Market Intelligence */}
+      <section>
+        <IntelligenceGrid cards={cards} />
+      </section>
+
+      {/* Featured Cards */}
+      <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Featured Cards</h2>
-          <a 
-            href="/cards"
-            className="text-sm font-medium text-blue-600 hover:text-blue-700"
-          >
-            View all →
-          </a>
+          <div>
+            <h2 className="text-2xl font-bold text-white">Featured Cards</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              {totalPlayers} players • {totalCards} cards tracked
+            </p>
+          </div>
+          <Link href="/cards" className="text-cyan-400 hover:text-cyan-300 flex items-center gap-1 text-sm">
+            View all 
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </Link>
         </div>
-        <CardGrid cards={featuredCards} />
+        <CardGrid cards={cards.slice(0, 8)} />
+      </section>
+
+      {/* Stats Bar */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="glass-card p-4 hover:border-cyan-400/30 transition-all duration-300 hover:scale-[1.02]">
+          <AnimatedCounter value={totalCards} className="text-2xl font-bold text-white" />
+          <p className="text-xs text-muted-foreground mt-0.5">Cards Tracked</p>
+        </div>
+        <div className="glass-card p-4 hover:border-violet-400/30 transition-all duration-300 hover:scale-[1.02]">
+          <AnimatedCounter value={totalPlayers} className="text-2xl font-bold text-white" />
+          <p className="text-xs text-muted-foreground mt-0.5">Players</p>
+        </div>
+        <div className="glass-card p-4 hover:border-cyan-400/30 transition-all duration-300 hover:scale-[1.02]">
+          <AnimatedCounter value={psaCards} className="text-2xl font-bold text-cyan-400" />
+          <p className="text-xs text-muted-foreground mt-0.5">PSA Graded</p>
+        </div>
+        <div className="glass-card p-4 hover:border-emerald-400/30 transition-all duration-300 hover:scale-[1.02]">
+          <AnimatedCounter value={trendingUp} prefix="+" className="text-2xl font-bold text-emerald-400" />
+          <p className="text-xs text-muted-foreground mt-0.5">Trending Up</p>
+        </div>
       </div>
 
-      {/* Features Section */}
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="rounded-lg border bg-card p-6">
-            <h3 className="text-lg font-semibold">Track Prices</h3>
-            <p className="text-muted-foreground mt-2">
-              Monitor historical sales data from eBay, PWCC, Heritage, and more.
-            </p>
+      {/* How It Works */}
+      <section className="py-12 border-t border-white/5">
+        <h2 className="text-3xl font-bold text-white mb-12 text-center">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="text-center">
+            <div className="w-14 h-14 bg-cyan-500/10 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">1. Browse Cards</h3>
+            <p className="text-muted-foreground text-sm">Search and filter through graded cards</p>
           </div>
-          <div className="rounded-lg border bg-card p-6">
-            <h3 className="text-lg font-semibold">Market Intelligence</h3>
-            <p className="text-muted-foreground mt-2">
-              Fair value scores, liquidity index, and momentum tracking.
-            </p>
+          <div className="text-center">
+            <div className="w-14 h-14 bg-cyan-500/10 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">2. Check Metrics</h3>
+            <p className="text-muted-foreground text-sm">View fair value & momentum scores</p>
           </div>
-          <div className="rounded-lg border bg-card p-6">
-            <h3 className="text-lg font-semibold">Graded Cards Only</h3>
-            <p className="text-muted-foreground mt-2">
-              Focused on PSA, BGS, and SGC graded cards with population reports.
-            </p>
+          <div className="text-center">
+            <div className="w-14 h-14 bg-cyan-500/10 text-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-white mb-2">3. Track Sales</h3>
+            <p className="text-muted-foreground text-sm">Monitor recent sales & price history</p>
           </div>
         </div>
-      </div>
-    </main>
+      </section>
+    </div>
   )
 }

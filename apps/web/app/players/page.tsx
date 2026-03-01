@@ -1,44 +1,54 @@
-import { prisma } from "@slugger/db/client"
-import { PlayerHero } from "@slugger/ui/components/player-hero"
-import { CardGrid } from "@slugger/ui/components/card-grid"
+import Link from 'next/link'
+import { getPlayers } from '../../lib/data'
 
-export default async function PlayersPage() {
-  const players = await prisma.player.findMany({
-    include: {
-      cards: {
-        include: {
-          set: true,
-          gradedCards: true,
-        },
-      },
-    },
-    orderBy: {
-      name: "asc",
-    },
-  })
+export default function PlayersPage() {
+  const players = getPlayers()
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold">Players</h1>
-          <p className="text-muted-foreground mt-2">
-            {players.length} baseball legends tracked
-          </p>
-        </div>
-
-        <div className="space-y-12">
-          {players.map((player) => (
-            <section key={player.id}>
-              <PlayerHero player={player} />
-              <div className="mt-6">
-                <h2 className="text-xl font-semibold mb-4">Cards</h2>
-                <CardGrid cards={player.cards} />
-              </div>
-            </section>
-          ))}
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Players</h1>
+        <p className="text-muted-foreground mt-1">{players.length} players in the database</p>
       </div>
-    </main>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {players.map((player) => (
+          <Link
+            key={player.id}
+            href={`/players/${player.slug}`}
+            className="group block p-6 rounded-xl border bg-card hover:shadow-lg transition-all duration-200"
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="font-bold text-lg group-hover:text-primary transition-colors">
+                  {player.name}
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {player.position} • {player.team}
+                </p>
+              </div>
+              <span className="text-2xl">⚾</span>
+            </div>
+            
+            {player.careerStats && (
+              <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t">
+                <div>
+                  <p className="text-lg font-bold">{player.careerStats.hits?.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">Hits</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold">{player.careerStats.homeRuns}</p>
+                  <p className="text-xs text-muted-foreground">HR</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold">.{player.careerStats.battingAverage?.toString().slice(2)}</p>
+                  <p className="text-xs text-muted-foreground">AVG</p>
+                </div>
+              </div>
+            )}
+          </Link>
+        ))}
+      </div>
+    </div>
   )
 }

@@ -1,19 +1,27 @@
+import { SkeletonGrid } from '../../components/Skeleton'
+
 export default function Loading() {
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 w-1/3 bg-muted rounded"></div>
-        <div className="h-4 w-1/4 bg-muted rounded"></div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="space-y-4">
-              <div className="aspect-[2/3] bg-muted rounded"></div>
-              <div className="h-4 w-3/4 bg-muted rounded"></div>
-              <div className="h-4 w-1/2 bg-muted rounded"></div>
-            </div>
-          ))}
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <div className="h-8 w-64 bg-white/5 rounded mb-2 animate-pulse" />
+            <div className="h-4 w-32 bg-white/5 rounded animate-pulse" />
+          </div>
+        </div>
+
+        {/* Search placeholder */}
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 h-10 bg-white/5 rounded animate-pulse" />
+          <div className="flex gap-2">
+            <div className="w-32 h-10 bg-white/5 rounded animate-pulse" />
+            <div className="w-32 h-10 bg-white/5 rounded animate-pulse" />
+          </div>
         </div>
       </div>
+
+      <SkeletonGrid count={12} />
     </div>
   )
 }
