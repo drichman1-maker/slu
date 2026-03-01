@@ -9,6 +9,14 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: 'understanding-pop-reports',
+    title: 'Understanding Pop Reports: How Scarcity Drives Graded Card Prices',
+    excerpt: 'Master the metrics that matter. Learn why PSA 10 population counts are just the beginning—and how to calculate true scarcity that predicts price movements before they happen.',
+    date: '2026-03-02',
+    readTime: '17 min read',
+    category: 'Education'
+  },
+  {
     slug: 'game-used-relic-cards',
     title: 'Game-Used Relic Cards: Do They Hold Value When Graded?',
     excerpt: 'The definitive analysis of graded relic cards: when grading adds 50-120% premiums, which relic types command respect, and why "player-worn" is the kiss of death for value retention.',
